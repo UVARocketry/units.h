@@ -1,5 +1,11 @@
 #ifndef UNITS_NAMES_H
 #define UNITS_NAMES_H
+/*
+ *
+ * Defines helper classes for getting the name of a unit
+ *
+ */
+
 #include "units_stringView.h"
 
 template <typename T, class = void>

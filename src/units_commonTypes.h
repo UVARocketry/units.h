@@ -1,5 +1,11 @@
 #ifndef UNITS_COMMONTYPES_H
 #define UNITS_COMMONTYPES_H
+/*
+ *
+ * This file defines the common types that people will use in their code (eg
+ * Length), along with a few tags defined from combined units (eg Newton)
+ *
+ */
 
 #include "units_baseTypeTags.h"
 #include "units_names.h"

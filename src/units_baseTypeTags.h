@@ -1,5 +1,10 @@
 #ifndef UNITS_BASETYPETAGS_H
 #define UNITS_BASETYPETAGS_H
+/*
+ *
+ * This file defines the basic tags to be used (eg Meter, Centi<>, etc)
+ *
+ */
 #include "_units_constants.h"
 #include "_units_simplificationPasses.h"
 #include "units_conversions.h"

@@ -8,8 +8,6 @@ struct Quantity {
     typedef T Formula;
     float value;
 
-    // TODO: make this private (force users to explicitly do Quantity::from or
-    // something that explicitly states the unit they are working with)
     explicit inline constexpr Quantity<T>(float v) : value(v) {
     }
 

@@ -1,9 +1,29 @@
 #ifndef UNITS_CONVERSIONS_H
 #define UNITS_CONVERSIONS_H
+/*
+ *
+ * Here be dragons.
+ *
+ * This file contains the logic for finding conversion factors from one tag to
+ * another.
+ *
+ * The idea behind the conversions is that we always convert to the base type,
+ * then convert back to target type (eg converting Inch -> Foot will do Inch ->
+ * Meter -> Foot) even though there is technically a conversion directly from
+ * Inch -> Foot. The reason for this is that we can't really find a direct
+ * conversion for _Mult<>  types because it is possible that the corresponding
+ * types are in different locations of the sorted _Mult<> pack
+ * (eg _Mult<Meter, Second> -> _Mult<Second, Foot>)
+ *
+ */
+
 #include "units_defs.h"
 #include <cstddef>
 #include <tuple>
 #include <type_traits>
+
+/// A value defined by types for defining the conversion to another type
+/// Requires that you also have defined ConversionTo as a static type.
 struct ConversionFactor {
     // most things should assume add is 0 tbh
     float add;
@@ -24,6 +44,8 @@ struct ConversionFactor {
 };
 
 template <typename T, class = void>
+// Determines if a class *has* a conversion to another type (eg Centi<Meter> has
+// a conversion to Meter)
 struct HasForwardingConversion : std::false_type {};
 
 template <typename T>
@@ -31,6 +53,7 @@ struct HasForwardingConversion<T, std::void_t<typename T::ConversionTo>>
   : std::true_type {};
 
 template <typename T>
+/// is true if T can be converted to another type
 constexpr bool has_forwarding_conversion_v = HasForwardingConversion<T>::value;
 
 /// ForwardingConversion for scalar types (non-_Mult, non-_Div)
@@ -54,6 +77,8 @@ struct ForwardingConversionMult<First, Rest...> {
     typedef typename ForwardingConversionImpl<First>::Forward FirstForward;
     typedef typename ForwardingConversionMult<Rest...>::Forward RestForward;
     // Use First's forwarding if it's different from First
+    // if First can be forwarded, use that one, otherwise use the forwarding of
+    // Rest
     typedef std::conditional_t<!std::is_same_v<First, FirstForward>,
                                _Mult<FirstForward, Rest...>,
                                _Mult<First, RestForward>>
@@ -94,6 +119,7 @@ struct ForwardingConversion<_Div<Num, Den>, void>
   : ForwardingConversionDiv<Num, Den> {};
 
 template <typename T, class = void>
+/// Determines the base unit for T (eg CommonType<Inch> -> Meter)
 struct CommonType {
     typedef T Out;
 };
@@ -106,16 +132,22 @@ template <typename T>
 using common_type_t = typename CommonType<T>::Out;
 
 template <typename T1, typename T2, class = void>
+/// Finds the conversion between T1 and T2 by
 struct ConversionTo {
     typedef typename ForwardingConversion<T1>::Forward T1Forward;
     typedef typename ForwardingConversion<T2>::Forward T2Forward;
 
+    /// If T1 and T2 both dont forward, and they are different types, then they
+    /// must not be convertible
     constexpr static const inline bool noForwards =
         std::is_same_v<T1Forward, T1> && std::is_same_v<T2Forward, T2>;
     static_assert(!noForwards, "No viable conversion found!");
 
+    // Conversion from T1 to the next type
     typedef ConversionTo<T1, T1Forward> T1Conversion;
+    // conversion from T2 to the previous type
     typedef ConversionTo<T2Forward, T2> T2Conversion;
+    // Conversion to join the chain together
     typedef ConversionTo<T1Forward, T2Forward> Sub;
 
     static inline constexpr float apply(float v) {
@@ -133,6 +165,8 @@ struct ConversionTo<_Mult<>, _Mult<>> {
 };
 
 template <typename T>
+// The generic conversion for when the conversion is directly defined by the
+// type
 struct ConversionTo<T, typename T::ConversionTo> {
     static inline constexpr float apply(float v) {
         return T::factor.applyTo(v);
@@ -147,6 +181,7 @@ struct ConversionTo<T, T> {
 };
 
 template <typename T>
+// conversion for when the inverse is defined by the type
 struct ConversionTo<typename T::ConversionTo, T> {
     static inline constexpr float apply(float v) {
         return T::factor.applyInverseTo(v);

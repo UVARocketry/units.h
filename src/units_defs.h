@@ -1,5 +1,11 @@
 #ifndef UNITS_DEFS_H
 #define UNITS_DEFS_H
+/*
+ *
+ * This file defines the basic building block types for Quantity
+ *
+ */
+
 // TODO: add a Sqrt<>
 // also be able to simplify Sqrt<>s (something in the reduction step that finds
 // n groups of things and calls Sqrt<T>::SimplifyWith<n> or something)

@@ -1,5 +1,25 @@
 #ifndef UNITS_SIMPLIFICATIONPASSES_H
 #define UNITS_SIMPLIFICATIONPASSES_H
+/**
+ * Here be dragons.
+ *
+ * This file defines four exports: Mult<>, Div<>, Mult2<>, and Div2<>
+ *
+ * Mult<> and Div<> are the only ones to be used externally.
+ * Mult2<> and Div2<> are intended to be used internally as they define
+ * multiplication and division operations between already simplified tag types
+ *
+ * This file contains all the logic for simplifying multiplication and division
+ * operations between different tag types. It does this with multiple
+ * simplification "passes":
+ *   - Extract Quantity<T> values into T (eg Length -> Meter)
+ *   - Reduce all operations to Div<Mult<...>, Mult<...>> and then sort the
+ *     numerator and denominator Mult<> template packs
+ *   - Remove matching types in the numerator and denominator
+ *   - Remove garbage (One, _Mult<>, etc)
+ *   - Remove more garbage (_Mult<_Mult<T>, T2> -> _Mult<T, T2>)
+ *   - Apply some simplifying reductions (eg _Div<T, One> -> T)
+ */
 #include "_units_sortTemplatePack.h"
 #include "units_defs.h"
 #include "units_utils.h"

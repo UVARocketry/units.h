@@ -3,6 +3,7 @@
 #include <type_traits>
 
 template <typename T>
+/// Extracts a type out of a class template argument list (eg C<T> -> T)
 struct ExtractInnerType {};
 template <template <typename R> typename C, typename T>
 struct ExtractInnerType<C<T>> {

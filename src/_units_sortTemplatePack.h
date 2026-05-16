@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UNITS_SORTTEMPLATEPACK_H
+#define UNITS_SORTTEMPLATEPACK_H
 /*
  * This file contains utilities for sorting template classes with parameter
  * packs of type parameters.
@@ -7,6 +8,8 @@
  * parameters
  *
  * Eg: Sort<Class<T1, T2, T5, T4, T3>>::Out == Class<T1, T2, T3, T4, T5>
+ *
+ * Here be dragons
  */
 
 #include "units_stringView.h"
@@ -183,3 +186,4 @@ struct Sort<Class<Args...>> {
     /// merge together
     typedef typename Merge<LeftSort, RightSort>::Out Out;
 };
+#endif
