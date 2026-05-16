@@ -32,11 +32,41 @@ float airDensity_kgpm3(float baseBaro_Pa, float baseTemp_K, float basePos_m,
 }
 ```
 
-units.h is a library that checks all of that icky analysis *for you* at compile time. It allows you to express your unit types *in English*. Furthermore, it is *as fast* as using regular floating point values in when compiling at higher optimization levels. Just `#include "units.h"` and start converting your variables to units
+units.h is a library that checks all of that icky analysis *for you* at compile time. It allows you to express your unit types *in English*. Furthermore, it is *as fast* as using regular floating point values when compiling at higher optimization levels. Just `#include "units.h"` and start converting your variables to units, like this:
+
+```cpp
+Density airDensity(Pressure basePressure, Temperature baseTemp, Length basePos,
+                   Length h) {
+    Acceleration g = 1.0_g;
+
+    typedef Quantity<Div<Joule, Mult<Kilogram, Kelvin>>> RType;
+    // gas constant for dry air [J/(kg·K)]
+    constexpr RType R{287.05f};
+
+    typedef Quantity<Div<Kelvin, Meter>> LapseRate;
+    constexpr LapseRate L{0.0065f}; // temperature lapse rate [K/m]
+
+    // Altitude difference
+    Length dz = (h - basePos);
+
+    // Temperature at new altitude
+    Temperature T = baseTemp - L * dz;
+
+    // Pressure at new altitude
+    Constant exponent = g / (R * L);
+    Pressure p = basePressure * std::pow((T / baseTemp).value, exponent.value);
+
+    // Density at new altitude
+    return p / (R * T);
+
+    // if you forget parentheses, you will get a type error
+    return p / R * T; // errors out!
+}
+```
 
 ## Quick Demo
 
-units.h enables this to happen safely and be checked:
+units.h enables dimensional analysis to happen safely and be checked:
 
 ```cpp
 Length l = 1.0_m;
@@ -52,7 +82,7 @@ Velocity v2 = l * t;
 
 units.h distinguishes the following things: tag types and Quantity types. A tag type has no properties and is useless on its own, Quantity types are where the actual interesting stuff goes on and they are defined as a Quantity of a tag type (eg `Quantity<TagType>`)
 
-The following tag types are avialable:
+The following base tag types are available:
 
 - `One`: Defines a unit less value (such as a ratio)
 - `Meter`
@@ -69,7 +99,7 @@ The following tag types are avialable:
 - `Tesla` (Equivalent to N/(A*m))
 - `Hertz` (Equivalent to 1/s)
 
-It also defines the following tags that are convertible to one of the above base tags:
+units.h also defines the following tags that are convertible to one of the above base tags:
 
 - `Foot`
 - `Gauss` (Convertible to `Tesla`)
